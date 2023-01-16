@@ -1,29 +1,70 @@
 import * as trpcNext from '@trpc/server/adapters/next';
+import { Db, ObjectId } from 'mongodb';
 import { z } from 'zod';
 
 import { publicProcedure, router } from '@/server/trpc';
+import clientPromise, { PAGE_SIZE } from '@/utils/mongodb';
 
+let db: Db;
+const loadDB = async () => {
+  const client = await clientPromise;
+  db = client.db('hello-chatroom');
+};
 const appRouter = router({
-  greeting: publicProcedure
+  list: publicProcedure
+    .input(z.object({ page: z.number() }))
+    .query(async ({ input }) => {
+      if (!db) await loadDB();
+      const pageCount = await db.collection('messages').countDocuments();
+      const totalPages = Math.ceil(pageCount / PAGE_SIZE);
+      const messages = await db
+        .collection('messages')
+        .find({})
+        .sort({ timeStamp: -1 })
+        .limit(PAGE_SIZE)
+        .skip(input.page * PAGE_SIZE)
+        .toArray();
+      return { messages, hasMore: input.page < totalPages };
+    }),
+  add: publicProcedure
     .input(
       z.object({
-        name: z.string().nullish(),
+        senderId: z.string(),
+        message: z.string(),
+        image: z.string().url().optional(),
       })
     )
-    .query(({ input }) => {
-      // This is what you're returning to your client
+    .mutation(async ({ input }) => {
+      if (!db) await loadDB();
+      const doc = {
+        ...input,
+        timeStamp: new Date(),
+        id: new ObjectId().toString(),
+      };
+      const message = await db.collection('messages').insertOne(doc);
       return {
-        text: `hello ${input?.name ?? 'world'}`,
-        // 💡 Tip: Try adding a new property here and see it propagate to the client straight-away
+        message,
+      };
+    }),
+  delete: publicProcedure
+    .input(
+      z.object({
+        id: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      if (!db) await loadDB();
+      const result = await db
+        .collection('messages')
+        .deleteOne({ id: input.id });
+      return {
+        result,
       };
     }),
 });
 
-// export only the type definition of the API
-// None of the actual implementation is exposed to the client
 export type AppRouter = typeof appRouter;
 
-// export API handler
 export default trpcNext.createNextApiHandler({
   router: appRouter,
   createContext: () => ({}),

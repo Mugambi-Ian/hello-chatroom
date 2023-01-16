@@ -1,6 +1,10 @@
 import { FC } from 'react';
 
-export const ChatHeader: FC = () => (
+interface IProps {
+  refreshMessages: () => Promise<void>;
+}
+
+export const ChatHeader: FC<IProps> = ({ refreshMessages }) => (
   <header className="bg-black flex w-full h-min py-3 lg:rounded-t-2xl">
     <img
       src="/apple-touch-icon.png"
@@ -13,7 +17,11 @@ export const ChatHeader: FC = () => (
         <span className="text-green-700 mr-2">●</span> global chat
       </p>
     </div>
-    <button className="rounded-lg self-center p-2 h-min mx-3">
+    <button
+      id="reload-msg"
+      className="rounded-lg self-center p-2 h-min mx-3"
+      onClick={refreshMessages}
+    >
       <img src="/assets/img/ic_reload.png" alt="" className="w-8 h-8" />
     </button>
   </header>

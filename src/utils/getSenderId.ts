@@ -1,5 +1,3 @@
-import { hasCookie, getCookie, setCookie } from 'cookies-next';
-
 function makeId(length: number) {
   let result = '';
   const characters =
@@ -12,10 +10,13 @@ function makeId(length: number) {
 }
 
 export function getSenderId() {
-  if (hasCookie('senderId')) {
-    return `${getCookie('senderId')}`;
+  if (typeof window !== 'undefined') {
+    if (localStorage.getItem('senderId')) {
+      return `${localStorage.getItem('senderId')}`;
+    }
+    const senderId = makeId(128);
+    localStorage.setItem('senderId', senderId);
+    return senderId;
   }
-  const senderId = makeId(256);
-  setCookie('senderId', senderId);
-  return senderId;
+  return '';
 }
