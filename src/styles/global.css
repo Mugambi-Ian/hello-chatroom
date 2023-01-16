@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "./base.css";
+
+
+@layer utilities {
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button,
+  select {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  input[type="number"],
+  select {
+    -moz-appearance: textfield;
+  }
+}

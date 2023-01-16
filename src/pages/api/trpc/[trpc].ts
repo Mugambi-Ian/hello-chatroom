@@ -4,7 +4,7 @@
  */
 import * as trpcNext from '@trpc/server/adapters/next';
 import { z } from 'zod';
-import { publicProcedure, router } from '~/server/trpc';
+import { publicProcedure, router } from '@/server/trpc';
 
 const appRouter = router({
   greeting: publicProcedure
