@@ -20,7 +20,7 @@ const ChatInput: FC<IProps> = ({ refreshMessages }) => {
     const msgBox = document.getElementById('msg-box');
     msgBox?.addEventListener('input', (e) => {
       // @ts-ignore
-      setMessage(e.target.outerText);
+      setMessage(e.target.innerText);
     });
   });
   const resetFields = useCallback(async () => {
@@ -49,7 +49,8 @@ const ChatInput: FC<IProps> = ({ refreshMessages }) => {
     setIdle(false);
     if (img.blob) {
       await uploadImage(img.blob, img.ext, (url) => send(url));
-    } else await send(undefined);
+    } else if (message) await send(undefined);
+    else setIdle(true);
   };
 
   return (

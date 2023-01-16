@@ -52,7 +52,7 @@ const appRouter = router({
         id: z.string(),
       })
     )
-    .query(async ({ input }) => {
+    .mutation(async ({ input }) => {
       if (!db) await loadDB();
       const result = await db
         .collection('messages')
