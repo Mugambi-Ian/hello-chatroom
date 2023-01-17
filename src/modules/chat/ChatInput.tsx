@@ -54,7 +54,7 @@ const ChatInput: FC<IProps> = ({ refreshMessages }) => {
   };
 
   return (
-    <div className="absolute bottom-0 inset-x-0 flex bg-gray-300 py-2 px-3 items-center lg:rounded-b-2xl">
+    <div className="absolute bottom-14 lg:bottom-0 inset-x-0 flex bg-gray-300 py-2 px-3 items-center lg:rounded-b-2xl">
       <div
         id="msg-box"
         contentEditable={true}

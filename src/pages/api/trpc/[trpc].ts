@@ -10,13 +10,14 @@ const loadDB = async () => {
   const client = await clientPromise;
   db = client.db('hello-chatroom');
 };
+
 const appRouter = router({
   list: publicProcedure
     .input(z.object({ page: z.number() }))
     .query(async ({ input }) => {
       if (!db) await loadDB();
       const pageCount = await db.collection('messages').countDocuments();
-      const totalPages = Math.ceil(pageCount / PAGE_SIZE);
+      const totalPages = Math.ceil(PAGE_SIZE / pageCount);
       const messages = await db
         .collection('messages')
         .find({})
@@ -24,7 +25,7 @@ const appRouter = router({
         .limit(PAGE_SIZE)
         .skip(input.page * PAGE_SIZE)
         .toArray();
-      return { messages, hasMore: input.page < totalPages };
+      return { messages, hasMore: totalPages >= input.page };
     }),
   add: publicProcedure
     .input(

@@ -26,18 +26,21 @@ export function useLoadMessages() {
     }
   }, [page, result.data?.messages]);
 
+  const loadPreviousPage = useCallback(async () => {
+    setPage(page + 1);
+    await result.refetch();
+    const res = result.data?.messages;
+    if (res && res.length)
+      setMessages([...messages, ...(result.data?.messages as IMessage[])]);
+  }, [messages, page, result]);
+
   return {
     refreshMessages,
     messages: loadMessages(),
     error: result.isError,
     loading: result.isLoading,
     success: result.isSuccess,
-    hasMoreMessages:
-      typeof result.data?.hasMore === 'undefined' || result.data?.hasMore,
-    loadNextPage: async () => {
-      setPage(page + 1);
-      await result.refetch();
-      setMessages([...messages, ...(result.data?.messages as IMessage[])]);
-    },
+    hasMoreMessages: result.data?.hasMore,
+    loadPreviousPage: () => result.data?.hasMore === true && loadPreviousPage(),
   };
 }

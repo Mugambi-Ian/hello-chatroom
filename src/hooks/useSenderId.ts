@@ -7,7 +7,7 @@ export function useSenderId() {
 
   useEffect(() => {
     setSenderId(getSenderId());
-  });
+  }, []);
 
   return senderId;
 }

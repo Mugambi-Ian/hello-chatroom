@@ -5,7 +5,7 @@ interface IProps {
 }
 
 export const ChatHeader: FC<IProps> = ({ refreshMessages }) => (
-  <header className="bg-black flex w-full h-min py-3 lg:rounded-t-2xl">
+  <header className="absolute top-0 inset-x-0 lg:relative bg-black flex w-full h-min py-3 lg:rounded-t-2xl z-10">
     <img
       src="/apple-touch-icon.png"
       alt="user profile"
@@ -20,7 +20,7 @@ export const ChatHeader: FC<IProps> = ({ refreshMessages }) => (
     <button
       id="reload-msg"
       className="rounded-lg self-center p-2 h-min mx-3"
-      onClick={refreshMessages}
+      onClick={() => refreshMessages()}
     >
       <img src="/assets/img/ic_reload.png" alt="" className="w-8 h-8" />
     </button>

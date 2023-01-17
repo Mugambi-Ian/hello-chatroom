@@ -1,6 +1,6 @@
 .loader {
-  width: 20px;
-  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
   border: 2px solid rgb(68, 68, 68);
   border-bottom-color: transparent;
   border-radius: 50%;

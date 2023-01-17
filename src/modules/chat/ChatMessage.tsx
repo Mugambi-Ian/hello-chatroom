@@ -4,40 +4,14 @@ import clsx from 'clsx';
 
 import { useSenderId } from '@/hooks/useSenderId';
 import { IMessage } from '@/shared/message';
+import { timeSince } from '@/utils/timeSince';
 import { trpc } from '@/utils/trpc';
 
 interface IProps {
   message: IMessage;
-  refreshMessages: () => Promise<void>;
+  refreshMessages: () => boolean | Promise<void>;
 }
 
-function timeSince(date: Date) {
-  // @ts-ignore
-  const seconds = Math.floor((new Date() - date) / 1000);
-
-  let interval = seconds / 31536000;
-
-  if (interval > 1) {
-    return `${Math.floor(interval)} years`;
-  }
-  interval = seconds / 2592000;
-  if (interval > 1) {
-    return `${Math.floor(interval)} months`;
-  }
-  interval = seconds / 86400;
-  if (interval > 1) {
-    return `${Math.floor(interval)} days`;
-  }
-  interval = seconds / 3600;
-  if (interval > 1) {
-    return `${Math.floor(interval)} hours`;
-  }
-  interval = seconds / 60;
-  if (interval > 1) {
-    return `${Math.floor(interval)} minutes`;
-  }
-  return `${Math.floor(seconds)} seconds`;
-}
 const ChatMessage: FC<IProps> = ({ message: m, refreshMessages }) => {
   const senderId = useSenderId();
   const isSender = m.senderId === senderId;
@@ -45,9 +19,9 @@ const ChatMessage: FC<IProps> = ({ message: m, refreshMessages }) => {
   const [isDeleteVisible, showDelete] = useState(false);
 
   const deleteMutation = trpc.delete.useMutation();
+
   const deleteMsg = async () => {
     await deleteMutation.mutateAsync({ id: m.id! });
-    await refreshMessages();
     await refreshMessages();
   };
 
@@ -56,7 +30,10 @@ const ChatMessage: FC<IProps> = ({ message: m, refreshMessages }) => {
       src="/assets/img/ic_bin.png"
       alt=""
       className="w-8 h-8 lg:w-16 lg:h-16  mx-2 cursor-pointer"
-      onClick={deleteMsg}
+      onClick={async () => {
+        await deleteMsg();
+        await refreshMessages();
+      }}
     />
   );
   return (
