@@ -1,71 +1,65 @@
-import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
+import React, { FC, useCallback, useContext, useEffect, useRef } from 'react';
 
-import { IMessage } from '@/shared/message';
+import { ChatContext } from '@/context/ChatContext';
 
 import ChatMessage from './ChatMessage';
 
-interface IProps {
-  loading: boolean;
-  messages: IMessage[];
-  hasMoreMessages: boolean | undefined;
-  loadPreviousPage: () => boolean | Promise<void>;
-  refreshMessages: () => boolean | Promise<void>;
-}
-
-const ChatView: FC<IProps> = ({
-  hasMoreMessages,
-  loadPreviousPage,
-  messages,
-  refreshMessages,
-  loading,
-}) => {
-  const [fetching, setFetching] = useState(false);
+const ChatView: FC = () => {
   const listRef = useRef<HTMLDivElement | null>(null);
+  const { messages, hasMoreMessages, loadPreviousPage, fetching } =
+    useContext(ChatContext);
 
   useEffect(() => {
-    if (listRef.current != null)
+    if (listRef.current != null && !fetching)
       listRef.current.onscroll = () => {
-        if (
-          hasMoreMessages &&
-          listRef.current!.scrollTop / listRef.current!.offsetHeight >= 0.5
-        ) {
+        const percentScrolled =
+          (listRef.current!.scrollTop /
+            (listRef.current!.scrollHeight - listRef.current!.offsetHeight)) *
+          100;
+        if (percentScrolled >= 85) {
           document.getElementById('reloadBtn')?.click();
-          setFetching(true);
         }
       };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    else if (listRef.current && fetching) listRef.current.onscroll = null;
+  }, [fetching]);
 
   const fetchMessages = useCallback(() => {
-    let timeoutID: NodeJS.Timeout | undefined;
-    const debounced = () => {
-      clearTimeout(timeoutID);
-      timeoutID = setTimeout(async () => {
-        await loadPreviousPage();
-        setFetching(false);
-      }, 500);
-    };
-    return debounced;
-  }, [loadPreviousPage]);
+    if (!fetching) {
+      let timeoutID: NodeJS.Timeout | undefined;
+      const debounced = () => {
+        clearTimeout(timeoutID);
+        timeoutID = setTimeout(async () => {
+          await loadPreviousPage();
+        }, 750);
+      };
+      return debounced();
+    }
+    return null;
+  }, [fetching, loadPreviousPage]);
 
   return (
     <section
       ref={listRef}
-      className="bg-light-gray-300 flex flex-col relative w-full h-5/6 overflow-y-auto flex-1 mt-16  lg:mt-0 pb-28 lg:pb-14 overflow-x-hidden"
+      className="bg-light-gray-300 flex flex-col relative w-full h-5/6 overflow-y-auto flex-1 mt-16 pt-5  lg:mt-0 pb-28 lg:pb-14 overflow-x-hidden"
     >
-      <button className="hidden" onClick={fetchMessages()} id="reloadBtn" />
       {messages &&
         messages.map((m) => (
-          <ChatMessage
-            refreshMessages={refreshMessages}
-            message={m}
-            key={m.id}
-          />
+          <ChatMessage message={m} key={m._id?.toString()} />
         ))}
-      {(loading || fetching) && hasMoreMessages && (
-        <div className="mx-auto">
-          <span className="loader h-10 w-10 my-2" />
+      {fetching && hasMoreMessages && (
+        <div className="mx-auto my-3">
+          <span className="loader h-10 w-10 " />
         </div>
+      )}
+      {!fetching && hasMoreMessages && (
+        <button
+          className="my-2"
+          onClick={() => fetchMessages()}
+          id="reloadBtn"
+          disabled={fetching}
+        >
+          Load Previous Messages
+        </button>
       )}
     </section>
   );

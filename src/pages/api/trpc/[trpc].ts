@@ -1,31 +1,32 @@
 import * as trpcNext from '@trpc/server/adapters/next';
-import { Db, ObjectId } from 'mongodb';
+import { Document, FindOptions, ObjectId } from 'mongodb';
 import { z } from 'zod';
 
 import { publicProcedure, router } from '@/server/trpc';
-import clientPromise, { PAGE_SIZE } from '@/utils/mongodb';
-
-let db: Db;
-const loadDB = async () => {
-  const client = await clientPromise;
-  db = client.db('hello-chatroom');
-};
+import { PAGE_SIZE } from '@/utils';
+import loadDB from '@/utils/mongodb';
 
 const appRouter = router({
   list: publicProcedure
-    .input(z.object({ page: z.number() }))
+    .input(z.object({ _id: z.string() }))
     .query(async ({ input }) => {
-      if (!db) await loadDB();
-      const pageCount = await db.collection('messages').countDocuments();
-      const totalPages = Math.ceil(PAGE_SIZE / pageCount);
+      const { _id: id } = input;
+      const db = await loadDB();
+
+      const options: FindOptions<Document> = {
+        sort: { timeStamp: -1 },
+        limit: PAGE_SIZE,
+      };
+
+      let find = {};
+      if (id.length !== 0) find = { _id: { $lt: new ObjectId(id) } };
+
       const messages = await db
         .collection('messages')
-        .find({})
-        .sort({ timeStamp: -1 })
-        .limit(PAGE_SIZE)
-        .skip(input.page * PAGE_SIZE)
+        .find(find, options)
         .toArray();
-      return { messages, hasMore: totalPages >= input.page };
+
+      return messages;
     }),
   add: publicProcedure
     .input(
@@ -36,7 +37,7 @@ const appRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      if (!db) await loadDB();
+      const db = await loadDB();
       const doc = {
         ...input,
         timeStamp: new Date(),
@@ -50,14 +51,15 @@ const appRouter = router({
   delete: publicProcedure
     .input(
       z.object({
-        id: z.string(),
+        _id: z.string(),
       })
     )
     .mutation(async ({ input }) => {
-      if (!db) await loadDB();
+      const db = await loadDB();
       const result = await db
         .collection('messages')
-        .deleteOne({ id: input.id });
+
+        .deleteOne({ _id: new ObjectId(input._id) });
       return {
         result,
       };

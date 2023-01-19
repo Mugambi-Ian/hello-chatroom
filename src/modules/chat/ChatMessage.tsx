@@ -1,41 +1,41 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useContext, useState } from 'react';
 
 import clsx from 'clsx';
 
+import { ChatContext } from '@/context/ChatContext';
 import { useSenderId } from '@/hooks/useSenderId';
 import { IMessage } from '@/shared/message';
-import { timeSince } from '@/utils/timeSince';
+import { timeSince } from '@/utils';
 import { trpc } from '@/utils/trpc';
 
 interface IProps {
   message: IMessage;
-  refreshMessages: () => boolean | Promise<void>;
 }
 
-const ChatMessage: FC<IProps> = ({ message: m, refreshMessages }) => {
+const ChatMessage: FC<IProps> = ({ message: m }) => {
   const senderId = useSenderId();
   const isSender = m.senderId === senderId;
   const emptyMessage = m.message.length === 0;
+  const { refreshMessages, resetCursor } = useContext(ChatContext);
   const [isDeleteVisible, showDelete] = useState(false);
 
   const deleteMutation = trpc.delete.useMutation();
 
   const deleteMsg = async () => {
-    await deleteMutation.mutateAsync({ id: m.id! });
+    resetCursor();
+    await deleteMutation.mutateAsync({ _id: m._id!.toString() });
     await refreshMessages();
   };
 
-  const deleteBtn = (
+  const DeleteBtn = () => (
     <img
       src="/assets/img/ic_bin.png"
       alt=""
       className="w-8 h-8 lg:w-16 lg:h-16  mx-2 cursor-pointer"
-      onClick={async () => {
-        await deleteMsg();
-        await refreshMessages();
-      }}
+      onClick={deleteMsg}
     />
   );
+
   return (
     <span
       onMouseEnter={() => showDelete(true)}
@@ -77,14 +77,14 @@ const ChatMessage: FC<IProps> = ({ message: m, refreshMessages }) => {
             isSender && emptyMessage && isDeleteVisible && 'mr-16 lg:mr-[102px]'
           )}
         >
-          {isDeleteVisible && emptyMessage && isSender && deleteBtn}
+          {isDeleteVisible && emptyMessage && isSender && <DeleteBtn />}
           <img
             onClick={() => window.open(m.image, '_blank')}
             src={m.image}
             alt=""
             className="rounded-2xl cursor-pointer w-min"
           />
-          {isDeleteVisible && emptyMessage && !isSender && deleteBtn}
+          {isDeleteVisible && emptyMessage && !isSender && <DeleteBtn />}
         </span>
       )}
       <p

@@ -1,15 +1,19 @@
-import { MongoClient } from 'mongodb';
+import { Db, MongoClient } from 'mongodb';
 
 if (!process.env.MONGODB_URI) {
   throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
 }
 
-const uri = process.env.MONGODB_URI;
-const options = {};
+let db: Db;
+const loadDB = async () => {
+  if (!db) {
+    const uri = process.env.MONGODB_URI;
+    const client = await new MongoClient(uri as string, {});
+    const clientPromise: Promise<MongoClient> = client.connect();
+    const c = await clientPromise;
+    db = c.db('hello-chatroom');
+  }
+  return db;
+};
 
-const client = new MongoClient(uri, options);
-const clientPromise: Promise<MongoClient> = client.connect();
-
-export default clientPromise;
-
-export const PAGE_SIZE = 10;
+export default loadDB;
